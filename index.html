@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Routine Assistant</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:'Poppins',sans-serif;
+}
+
+body{
+  height:100vh;
+  overflow:hidden;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  transition:1s;
+}
+
+/* DAY NIGHT */
+body.day{
+  background:linear-gradient(-45deg,#56ccf2,#2f80ed,#6dd5fa);
+  background-size:400% 400%;
+  animation:gradient 12s ease infinite;
+}
+body.night{
+  background:linear-gradient(-45deg,#0f2027,#203a43,#000428);
+  background-size:400% 400%;
+  animation:gradient 12s ease infinite;
+}
+@keyframes gradient{
+  0%{background-position:0% 50%;}
+  50%{background-position:100% 50%;}
+  100%{background-position:0% 50%;}
+}
+
+/* PARTICLES */
+canvas{
+  position:absolute;
+  top:0;
+  left:0;
+}
+
+/* UI */
+.container{
+  z-index:2;
+  width:90%;
+  max-width:420px;
+  padding:25px;
+  border-radius:20px;
+  backdrop-filter:blur(15px);
+  background:rgba(255,255,255,0.1);
+  color:white;
+}
+
+h1{
+  text-align:center;
+  margin-bottom:20px;
+}
+
+/* INPUT */
+.input-box{
+  margin-bottom:15px;
+}
+
+.input-box input{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:8px;
+}
+
+/* PROFESSIONAL TIME PICKER */
+.time-picker{
+  display:flex;
+  gap:10px;
+  margin-top:10px;
+}
+
+.time-picker select{
+  flex:1;
+  padding:12px;
+  border-radius:8px;
+  border:none;
+  background:white;
+  color:black;
+  font-weight:500;
+}
+
+button{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border:none;
+  border-radius:8px;
+  background:linear-gradient(to right,#00c6ff,#0072ff);
+  color:white;
+  cursor:pointer;
+}
+
+/* TASK LIST */
+ul{
+  margin-top:15px;
+  list-style:none;
+}
+
+li{
+  background:rgba(255,255,255,0.15);
+  padding:10px;
+  margin-bottom:10px;
+  border-radius:10px;
+  display:flex;
+  justify-content:space-between;
+}
+
+.done{
+  background:#00ff94;
+  color:black;
+  padding:5px 10px;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+</style>
+</head>
+
+<body>
+
+<canvas id="particles"></canvas>
+
+<div class="container">
+  <h1>📅 Routine Assistant</h1>
+
+  <div class="input-box">
+    <input type="text" id="taskName" placeholder="Task Name">
+  </div>
+
+  <div class="time-picker">
+    <select id="hour"></select>
+    <select id="minute"></select>
+    <select id="ampm">
+      <option>AM</option>
+      <option>PM</option>
+    </select>
+  </div>
+
+  <button onclick="addTask()">Add Task</button>
+
+  <ul id="taskList"></ul>
+</div>
+
+<script>
+
+/* DAY NIGHT */
+function setTheme(){
+  const h=new Date().getHours();
+  document.body.className=(h>=6&&h<18)?"day":"night";
+}
+setTheme();
+setInterval(setTheme,60000);
+
+/* TIME OPTIONS */
+for(let i=1;i<=12;i++){
+  hour.innerHTML+=`<option>${i}</option>`;
+}
+for(let i=0;i<60;i++){
+  minute.innerHTML+=`<option>${i.toString().padStart(2,"0")}</option>`;
+}
+
+/* TASK */
+let tasks=[];
+
+function addTask(){
+  const name=taskName.value;
+  const h=hour.value;
+  const m=minute.value;
+  const ap=ampm.value;
+
+  if(!name) return alert("Enter task");
+
+  const time=`${h}:${m} ${ap}`;
+  tasks.push({name,time,done:false});
+  render();
+}
+
+function render(){
+  taskList.innerHTML="";
+  tasks.forEach((t,i)=>{
+    let li=document.createElement("li");
+    li.innerHTML=`
+      ${t.time} - ${t.name}
+      <span class="done" onclick="doneTask(${i})">✔</span>
+    `;
+    taskList.appendChild(li);
+  });
+}
+
+function doneTask(i){
+  tasks[i].done=true;
+  alert("Completed ✅");
+}
+
+/* PARTICLES */
+const canvas=document.getElementById("particles");
+const ctx=canvas.getContext("2d");
+canvas.width=innerWidth;
+canvas.height=innerHeight;
+
+let p=[];
+for(let i=0;i<80;i++){
+  p.push({
+    x:Math.random()*canvas.width,
+    y:Math.random()*canvas.height,
+    r:Math.random()*2,
+    dx:(Math.random()-0.5)*0.5,
+    dy:(Math.random()-0.5)*0.5
+  });
+}
+
+function anim(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  p.forEach(pt=>{
+    ctx.beginPath();
+    ctx.arc(pt.x,pt.y,pt.r,0,Math.PI*2);
+    ctx.fillStyle="white";
+    ctx.fill();
+    pt.x+=pt.dx;
+    pt.y+=pt.dy;
+    if(pt.x<0||pt.x>canvas.width)pt.dx*=-1;
+    if(pt.y<0||pt.y>canvas.height)pt.dy*=-1;
+  });
+  requestAnimationFrame(anim);
+}
+anim();
+
+</script>
+
+</body>
+</html>
