@@ -223,6 +223,118 @@ button:active {
     font-size: 0.95rem;
 }
 
+/* ============================================ */
+/* INSTALL POPUP STYLES (NEW) */
+/* ============================================ */
+
+.install-popup {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    border-radius: 20px;
+    padding: 20px;
+    color: white;
+    z-index: 10000;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    animation: slideUp 0.5s ease;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.install-popup h4 {
+    margin: 0 0 10px 0;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.install-popup p {
+    margin: 0 0 15px 0;
+    font-size: 14px;
+    opacity: 0.9;
+    line-height: 1.5;
+}
+
+.install-steps {
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 12px;
+    margin: 15px 0;
+    font-size: 13px;
+}
+
+.install-steps ol {
+    margin: 8px 0 0 20px;
+    padding: 0;
+}
+
+.install-steps li {
+    margin: 8px 0;
+}
+
+.install-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.install-btn {
+    flex: 1;
+    background: #4F46E5;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 14px;
+    transition: transform 0.2s;
+}
+
+.later-btn {
+    flex: 1;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 14px;
+    transition: transform 0.2s;
+}
+
+.install-btn:hover, .later-btn:hover {
+    transform: translateY(-2px);
+}
+
+.install-btn:active, .later-btn:active {
+    transform: translateY(0);
+}
+
+/* iOS Specific Styles */
+.ios-install {
+    border-left: 4px solid #FF9500;
+}
+
+.android-install {
+    border-left: 4px solid #3DDC84;
+}
+
+/* Responsive for small screens */
 @media (max-width: 480px) {
     body {
         padding: 10px;
@@ -244,5 +356,25 @@ button:active {
     
     button {
         margin-top: 5px;
+    }
+    
+    .install-popup {
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        padding: 15px;
+    }
+    
+    .install-buttons {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .install-popup h4 {
+        font-size: 16px;
+    }
+    
+    .install-popup p {
+        font-size: 12px;
     }
 }
