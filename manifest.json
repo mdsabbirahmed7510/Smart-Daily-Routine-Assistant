@@ -1,0 +1,10 @@
+{
+  "name": "Smart Daily Routine Assistant",
+  "short_name": "Routine Assistant",
+  "description": "Smart app to manage your daily tasks and routines",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#4F46E5",
+  "background_color": "#ffffff",
+  "orientation": "portrait"
+}
