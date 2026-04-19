@@ -1,246 +1,959 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smart Routine Assistant</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>AI Scheduler | Smart Meeting Assistant</title>
+  <link rel="manifest" href="data:application/manifest+json,{}">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
+    body {
+      min-height: 100vh;
+      transition: background 0.5s ease, color 0.3s ease;
+      overflow-x: hidden;
+    }
 
-<style>
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family:'Poppins',sans-serif;
-}
+    body.day-mode {
+      background: #e8f0fe;
+    }
+    body.night-mode {
+      background: #0a0c15;
+    }
 
-body{
-  height:100vh;
-  overflow:hidden;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  transition:1s;
-}
+    .cinematic-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -2;
+      transition: all 0.5s ease;
+    }
+    body.day-mode .cinematic-bg {
+      background: linear-gradient(135deg, #f5f7ff 0%, #d4e4ff 50%, #b8d4ff 100%);
+      animation: dayDrift 15s ease infinite alternate;
+    }
+    body.night-mode .cinematic-bg {
+      background: radial-gradient(circle at 20% 30%, #0f172a, #020617);
+      animation: slowDrift 20s ease infinite alternate;
+    }
+    @keyframes dayDrift {
+      0% { background: linear-gradient(135deg, #f5f7ff, #d4e4ff); }
+      100% { background: linear-gradient(135deg, #e0eaff, #c2d8ff); }
+    }
+    @keyframes slowDrift {
+      0% { background: radial-gradient(circle at 20% 30%, #0f172a, #020617); }
+      100% { background: radial-gradient(circle at 80% 70%, #1e1b4b, #020617); }
+    }
 
-/* DAY NIGHT */
-body.day{
-  background:linear-gradient(-45deg,#56ccf2,#2f80ed,#6dd5fa);
-  background-size:400% 400%;
-  animation:gradient 12s ease infinite;
-}
-body.night{
-  background:linear-gradient(-45deg,#0f2027,#203a43,#000428);
-  background-size:400% 400%;
-  animation:gradient 12s ease infinite;
-}
-@keyframes gradient{
-  0%{background-position:0% 50%;}
-  50%{background-position:100% 50%;}
-  100%{background-position:0% 50%;}
-}
+    .particle-field {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      pointer-events: none;
+    }
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      animation: floatPremium linear infinite;
+    }
+    body.day-mode .particle {
+      background: rgba(100, 120, 200, 0.2);
+      box-shadow: 0 0 8px rgba(80, 100, 200, 0.3);
+    }
+    body.night-mode .particle {
+      background: rgba(255, 255, 255, 0.25);
+      box-shadow: 0 0 12px rgba(120, 160, 255, 0.3);
+    }
+    @keyframes floatPremium {
+      0% { transform: translateY(100vh) translateX(0) rotate(0deg); opacity: 0; }
+      15% { opacity: 0.6; }
+      85% { opacity: 0.4; }
+      100% { transform: translateY(-20vh) translateX(60px) rotate(360deg); opacity: 0; }
+    }
 
-/* PARTICLES */
-canvas{
-  position:absolute;
-  top:0;
-  left:0;
-}
+    .app-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
 
-/* UI */
-.container{
-  z-index:2;
-  width:90%;
-  max-width:420px;
-  padding:25px;
-  border-radius:20px;
-  backdrop-filter:blur(15px);
-  background:rgba(255,255,255,0.1);
-  color:white;
-}
+    .glass-panel {
+      max-width: 700px;
+      width: 100%;
+      backdrop-filter: blur(18px);
+      border-radius: 3rem;
+      padding: 2rem;
+      transition: all 0.3s ease;
+    }
+    body.day-mode .glass-panel {
+      background: rgba(255, 255, 255, 0.45);
+      box-shadow: 0 25px 45px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.5);
+      border: 1px solid rgba(255,255,255,0.6);
+    }
+    body.night-mode .glass-panel {
+      background: rgba(12, 18, 34, 0.55);
+      box-shadow: 0 30px 50px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+    }
 
-h1{
-  text-align:center;
-  margin-bottom:20px;
-}
+    .personal-greeting {
+      margin-bottom: 1.8rem;
+    }
+    .greeting-line {
+      font-size: 1rem;
+      font-weight: 500;
+    }
+    body.day-mode .greeting-line {
+      color: #2c3e66;
+    }
+    body.night-mode .greeting-line {
+      color: #b9d0ff;
+    }
+    .user-name-highlight {
+      font-size: 2.2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .assistant-tagline {
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    body.day-mode .assistant-tagline {
+      color: #3a4a7a;
+    }
+    body.night-mode .assistant-tagline {
+      color: rgba(200, 215, 255, 0.8);
+    }
 
-/* INPUT */
-.input-box{
-  margin-bottom:15px;
-}
+    .theme-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.3);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      z-index: 100;
+      transition: all 0.3s;
+    }
+    body.day-mode .theme-toggle {
+      background: rgba(0,0,0,0.2);
+      color: #2d3748;
+    }
+    body.night-mode .theme-toggle {
+      background: rgba(255,255,255,0.15);
+      color: #ffd966;
+    }
 
-.input-box input{
-  width:100%;
-  padding:12px;
-  border:none;
-  border-radius:8px;
-}
+    .input-field, .meeting-link-field {
+      border-radius: 2rem;
+      padding: 0.9rem 1.5rem;
+      font-size: 1rem;
+      outline: none;
+      width: 100%;
+      transition: all 0.2s;
+    }
+    body.day-mode .input-field,
+    body.day-mode .meeting-link-field {
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid rgba(100, 100, 150, 0.3);
+      color: #1a1a2e;
+    }
+    body.day-mode .input-field::placeholder {
+      color: #6a6a8a;
+    }
+    body.night-mode .input-field,
+    body.night-mode .meeting-link-field {
+      background: rgba(10, 15, 30, 0.7);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: white;
+    }
+    body.night-mode .input-field::placeholder {
+      color: #a0a8c0;
+    }
 
-/* PROFESSIONAL TIME PICKER */
-.time-picker{
-  display:flex;
-  gap:10px;
-  margin-top:10px;
-}
+    .time-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      align-items: center;
+      margin: 0.5rem 0;
+    }
+    .time-selector {
+      flex: 2;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-radius: 2rem;
+      padding: 0.4rem 1rem;
+    }
+    body.day-mode .time-selector {
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid rgba(100, 100, 150, 0.3);
+    }
+    body.night-mode .time-selector {
+      background: rgba(10, 15, 30, 0.7);
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+    .time-selector select {
+      background: transparent;
+      border: none;
+      font-weight: 500;
+      font-size: 1rem;
+      padding: 0.6rem 0;
+      cursor: pointer;
+    }
+    body.day-mode .time-selector select {
+      color: #1a1a2e;
+    }
+    body.night-mode .time-selector select {
+      color: white;
+    }
+    .time-selector select option {
+      background: #1e1e3a;
+      color: white;
+    }
+    body.day-mode .time-selector select option {
+      background: white;
+      color: #1a1a2e;
+    }
+    .time-colon {
+      font-size: 1.4rem;
+      font-weight: 600;
+    }
+    body.day-mode .time-colon {
+      color: #2d3748;
+    }
+    body.night-mode .time-colon {
+      color: white;
+    }
 
-.time-picker select{
-  flex:1;
-  padding:12px;
-  border-radius:8px;
-  border:none;
-  background:white;
-  color:black;
-  font-weight:500;
-}
+    .task-type-selector {
+      flex: 1.3;
+      border-radius: 2rem;
+      padding: 0.4rem 1rem;
+    }
+    body.day-mode .task-type-selector {
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid rgba(100, 100, 150, 0.3);
+    }
+    body.night-mode .task-type-selector {
+      background: rgba(10, 15, 30, 0.7);
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+    .task-type-selector select {
+      width: 100%;
+      background: transparent;
+      border: none;
+      font-weight: 500;
+      padding: 0.6rem 0;
+      cursor: pointer;
+    }
+    body.day-mode .task-type-selector select {
+      color: #1a1a2e;
+    }
+    body.night-mode .task-type-selector select {
+      color: white;
+    }
+    .task-type-selector select option {
+      background: #1e1e3a;
+      color: white;
+    }
+    body.day-mode .task-type-selector select option {
+      background: white;
+      color: #1a1a2e;
+    }
 
-button{
-  width:100%;
-  padding:12px;
-  margin-top:10px;
-  border:none;
-  border-radius:8px;
-  background:linear-gradient(to right,#00c6ff,#0072ff);
-  color:white;
-  cursor:pointer;
-}
+    .dual-buttons {
+      display: flex;
+      gap: 1rem;
+      margin: 1.5rem 0 0.5rem;
+      flex-wrap: wrap;
+    }
+    .btn-premium {
+      flex: 1;
+      border: none;
+      padding: 0.9rem 0;
+      border-radius: 2.5rem;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .btn-add {
+      background: linear-gradient(105deg, #4f46e5, #7c3aed);
+      color: white;
+      box-shadow: 0 6px 18px rgba(79,70,229,0.3);
+    }
+    .btn-add:hover {
+      transform: scale(1.02);
+      box-shadow: 0 12px 28px rgba(79,70,229,0.5);
+    }
+    .btn-view {
+      background: rgba(100, 100, 150, 0.3);
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+    }
+    body.day-mode .btn-view {
+      background: rgba(50, 50, 80, 0.2);
+      color: #2d3748;
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+    body.night-mode .btn-view {
+      background: rgba(40, 50, 85, 0.8);
+      color: white;
+    }
 
-/* TASK LIST */
-ul{
-  margin-top:15px;
-  list-style:none;
-}
-
-li{
-  background:rgba(255,255,255,0.15);
-  padding:10px;
-  margin-bottom:10px;
-  border-radius:10px;
-  display:flex;
-  justify-content:space-between;
-}
-
-.done{
-  background:#00ff94;
-  color:black;
-  padding:5px 10px;
-  border-radius:6px;
-  cursor:pointer;
-}
-
-</style>
+    .modal-routine {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(12px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      visibility: hidden;
+      opacity: 0;
+      transition: visibility 0.25s, opacity 0.25s;
+    }
+    .modal-routine.active {
+      visibility: visible;
+      opacity: 1;
+    }
+    .modal-inner {
+      width: 90%;
+      max-width: 850px;
+      max-height: 85vh;
+      border-radius: 2.5rem;
+      transform: scale(0.96);
+      opacity: 0;
+      transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1), opacity 0.25s;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    body.day-mode .modal-inner {
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+    body.night-mode .modal-inner {
+      background: rgba(16, 22, 42, 0.92);
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    .modal-routine.active .modal-inner {
+      transform: scale(1);
+      opacity: 1;
+    }
+    .modal-header {
+      padding: 1.3rem 2rem;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    body.night-mode .modal-header {
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .modal-header h2 {
+      font-weight: 700;
+      font-size: 1.5rem;
+    }
+    body.day-mode .modal-header h2 {
+      color: #1a1a2e;
+    }
+    body.night-mode .modal-header h2 {
+      background: linear-gradient(120deg, #fff, #b7ceff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .close-modal-x {
+      background: rgba(0,0,0,0.1);
+      border: none;
+      width: 38px;
+      height: 38px;
+      border-radius: 40px;
+      cursor: pointer;
+    }
+    body.night-mode .close-modal-x {
+      background: rgba(255,255,255,0.1);
+      color: white;
+    }
+    .tabs-category {
+      display: flex;
+      gap: 0.6rem;
+      padding: 1rem 2rem;
+      flex-wrap: wrap;
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+    }
+    body.night-mode .tabs-category {
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .tab-pill {
+      border: none;
+      padding: 0.5rem 1.3rem;
+      border-radius: 2rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    body.day-mode .tab-pill {
+      background: rgba(0, 0, 0, 0.08);
+      color: #2d3748;
+    }
+    body.night-mode .tab-pill {
+      background: rgba(35, 45, 75, 0.7);
+      color: #e0e7ff;
+    }
+    .tab-pill.active {
+      background: #4f46e5;
+      color: white;
+      box-shadow: 0 4px 12px rgba(79,70,229,0.4);
+    }
+    .tasks-scroll {
+      padding: 1.2rem 1.8rem;
+      overflow-y: auto;
+      flex: 1;
+      max-height: 55vh;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+    .task-card {
+      border-radius: 1.8rem;
+      padding: 0.9rem 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    body.day-mode .task-card {
+      background: rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(0,0,0,0.08);
+    }
+    body.night-mode .task-card {
+      background: rgba(8, 12, 28, 0.75);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .task-left {
+      flex: 3;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .task-title {
+      font-weight: 600;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    body.day-mode .task-title {
+      color: #1a1a2e;
+    }
+    body.night-mode .task-title {
+      color: white;
+    }
+    .task-time-text {
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    body.day-mode .task-time-text {
+      color: #4a5568;
+    }
+    body.night-mode .task-time-text {
+      color: #b9c8ff;
+    }
+    .meeting-link {
+      font-size: 0.7rem;
+      cursor: pointer;
+      text-decoration: underline;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    body.day-mode .meeting-link {
+      color: #4f46e5;
+    }
+    body.night-mode .meeting-link {
+      color: #7b9eff;
+    }
+    .task-actions-group {
+      display: flex;
+      gap: 12px;
+    }
+    .action-icon {
+      background: transparent;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      width: 34px;
+      height: 34px;
+      border-radius: 30px;
+      transition: all 0.2s;
+    }
+    .done-act {
+      color: #4a5568;
+    }
+    .done-act:hover {
+      background: #10b981;
+      color: white;
+      transform: scale(1.05);
+    }
+    .delete-act {
+      color: #4a5568;
+    }
+    .delete-act:hover {
+      background: #ef4444;
+      color: white;
+      transform: scale(1.05);
+    }
+    body.night-mode .done-act, body.night-mode .delete-act {
+      color: #b9c6ff;
+    }
+    .empty-placeholder {
+      text-align: center;
+      padding: 2rem;
+    }
+    body.day-mode .empty-placeholder {
+      color: #6a6a8a;
+    }
+    body.night-mode .empty-placeholder {
+      color: #b0c4ffaa;
+    }
+    .imp-badge {
+      background: #ffaa33;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      color: #1a1200;
+    }
+    .meeting-badge {
+      background: #3498db;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      color: white;
+    }
+    .done-badge {
+      color: #6fcf97;
+    }
+    @media (max-width: 580px) {
+      .glass-panel { padding: 1.5rem; }
+      .time-row { flex-direction: column; }
+    }
+  </style>
 </head>
+<body class="night-mode">
 
-<body>
+<div class="cinematic-bg"></div>
+<div class="particle-field" id="particleField"></div>
 
-<canvas id="particles"></canvas>
+<button class="theme-toggle" id="themeToggle">
+  <i class="fas fa-sun"></i>
+</button>
 
-<div class="container">
-  <h1>📅 Routine Assistant</h1>
-
-  <div class="input-box">
-    <input type="text" id="taskName" placeholder="Task Name">
+<div id="nameOverlay" class="name-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);backdrop-filter:blur(12px);z-index:2000;display:flex;align-items:center;justify-content:center;">
+  <div class="name-card" style="background:rgba(20,28,50,0.95);backdrop-filter:blur(20px);border-radius:2.5rem;padding:2rem;width:90%;max-width:420px;text-align:center;border:1px solid rgba(255,255,255,0.2);">
+    <i class="fas fa-sparkles" style="font-size: 2rem; color:#a5c6ff;"></i>
+    <h3 style="color:white;margin-top:0.5rem;">Hi, welcome to AI Scheduler</h3>
+    <p style="color:#ccd9ff;margin:0.5rem 0;">What should I call you?</p>
+    <input type="text" id="userNameInput" placeholder="Your name" style="width:100%;padding:1rem;border-radius:3rem;background:rgba(255,255,255,0.15);color:white;font-size:1rem;margin:1.5rem 0;border:none;text-align:center;">
+    <button id="confirmNameBtn" style="background:linear-gradient(105deg,#4f46e5,#7c3aed);border:none;padding:0.8rem 1.8rem;border-radius:3rem;font-weight:600;color:white;cursor:pointer;">Continue →</button>
   </div>
+</div>
 
-  <div class="time-picker">
-    <select id="hour"></select>
-    <select id="minute"></select>
-    <select id="ampm">
-      <option>AM</option>
-      <option>PM</option>
-    </select>
+<div class="app-wrapper">
+  <div class="glass-panel">
+    <div class="personal-greeting">
+      <div class="greeting-line">Hello,</div>
+      <div class="user-name-highlight" id="dynamicUserName">Guest</div>
+      <div class="assistant-tagline">
+        <i class="fas fa-robot"></i> I am your personal AI assistant! I can join meetings automatically.
+      </div>
+    </div>
+
+    <input type="text" id="taskName" class="input-field" placeholder="Task/Meeting name... e.g., 'Team Sync'">
+    
+    <div class="time-row">
+      <div class="time-selector">
+        <select id="hourSelect">
+          <option>12</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+          <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option>
+        </select>
+        <span class="time-colon">:</span>
+        <select id="minuteSelect">
+          <!-- 00 to 59 all minutes -->
+        </select>
+        <select id="ampmSelect">
+          <option>AM</option><option>PM</option>
+        </select>
+      </div>
+      <div class="task-type-selector">
+        <select id="taskType">
+          <option value="normal">📋 Normal task</option>
+          <option value="important">⭐ Important task</option>
+          <option value="meeting">🎥 Meeting with link</option>
+        </select>
+      </div>
+    </div>
+
+    <input type="text" id="meetingLink" class="meeting-link-field" placeholder="Meeting link (Zoom/Google Meet/Teams) - optional">
+
+    <div class="dual-buttons">
+      <button id="addTaskBtn" class="btn-premium btn-add"><i class="fas fa-plus-circle"></i> Add Task</button>
+      <button id="viewTasksBtn" class="btn-premium btn-view"><i class="fas fa-list-check"></i> View Tasks</button>
+    </div>
   </div>
+</div>
 
-  <button onclick="addTask()">Add Task</button>
-
-  <ul id="taskList"></ul>
+<div id="taskModal" class="modal-routine">
+  <div class="modal-inner">
+    <div class="modal-header">
+      <h2><i class="fas fa-chalkboard-user"></i> My Tasks & Meetings</h2>
+      <button class="close-modal-x" id="closeModalBtn"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="tabs-category" id="tabList">
+      <button class="tab-pill active" data-tab="all">All Tasks</button>
+      <button class="tab-pill" data-tab="completed">Completed</button>
+      <button class="tab-pill" data-tab="upcoming">Upcoming</button>
+      <button class="tab-pill" data-tab="important">Important</button>
+      <button class="tab-pill" data-tab="meetings">Meetings</button>
+    </div>
+    <div class="tasks-scroll" id="tasksContainer">
+      <div class="empty-placeholder">✨ No tasks yet. Add your first task or meeting!</div>
+    </div>
+  </div>
 </div>
 
 <script>
+  // Populate minutes (00 to 59)
+  const minuteSelect = document.getElementById('minuteSelect');
+  for (let i = 0; i <= 59; i++) {
+    const option = document.createElement('option');
+    option.value = i.toString().padStart(2, '0');
+    option.textContent = i.toString().padStart(2, '0');
+    minuteSelect.appendChild(option);
+  }
 
-/* DAY NIGHT */
-function setTheme(){
-  const h=new Date().getHours();
-  document.body.className=(h>=6&&h<18)?"day":"night";
-}
-setTheme();
-setInterval(setTheme,60000);
+  let tasks = [];
+  let nextId = 1;
+  let currentTab = "all";
+  let userName = localStorage.getItem("ai_scheduler_user") || null;
+  let isDayMode = localStorage.getItem("theme_mode") === "day";
 
-/* TIME OPTIONS */
-for(let i=1;i<=12;i++){
-  hour.innerHTML+=`<option>${i}</option>`;
-}
-for(let i=0;i<60;i++){
-  minute.innerHTML+=`<option>${i.toString().padStart(2,"0")}</option>`;
-}
+  function setTheme(isDay) {
+    if (isDay) {
+      document.body.classList.remove('night-mode');
+      document.body.classList.add('day-mode');
+      document.querySelector('#themeToggle i').className = 'fas fa-moon';
+    } else {
+      document.body.classList.remove('day-mode');
+      document.body.classList.add('night-mode');
+      document.querySelector('#themeToggle i').className = 'fas fa-sun';
+    }
+    localStorage.setItem("theme_mode", isDay ? "day" : "night");
+  }
 
-/* TASK */
-let tasks=[];
+  function toggleTheme() {
+    isDayMode = !isDayMode;
+    setTheme(isDayMode);
+  }
 
-function addTask(){
-  const name=taskName.value;
-  const h=hour.value;
-  const m=minute.value;
-  const ap=ampm.value;
+  if (isDayMode) {
+    document.body.classList.add('day-mode');
+    document.querySelector('#themeToggle i').className = 'fas fa-moon';
+  } else {
+    document.body.classList.add('night-mode');
+    document.querySelector('#themeToggle i').className = 'fas fa-sun';
+  }
 
-  if(!name) return alert("Enter task");
+  document.getElementById('themeToggle').addEventListener('click', toggleTheme);
 
-  const time=`${h}:${m} ${ap}`;
-  tasks.push({name,time,done:false});
-  render();
-}
+  const nameOverlay = document.getElementById('nameOverlay');
+  const userNameInputField = document.getElementById('userNameInput');
+  const confirmBtn = document.getElementById('confirmNameBtn');
+  const dynamicUserNameSpan = document.getElementById('dynamicUserName');
 
-function render(){
-  taskList.innerHTML="";
-  tasks.forEach((t,i)=>{
-    let li=document.createElement("li");
-    li.innerHTML=`
-      ${t.time} - ${t.name}
-      <span class="done" onclick="doneTask(${i})">✔</span>
-    `;
-    taskList.appendChild(li);
+  function setUserName(name) {
+    if (!name.trim()) name = "Explorer";
+    userName = name.trim();
+    localStorage.setItem("ai_scheduler_user", userName);
+    dynamicUserNameSpan.innerText = userName;
+    nameOverlay.style.display = "none";
+    document.body.style.overflow = "auto";
+  }
+
+  if (userName) {
+    dynamicUserNameSpan.innerText = userName;
+    nameOverlay.style.display = "none";
+  } else {
+    nameOverlay.style.display = "flex";
+    document.body.style.overflow = "hidden";
+  }
+
+  confirmBtn.addEventListener('click', () => {
+    setUserName(userNameInputField.value.trim() || "Guest");
   });
-}
 
-function doneTask(i){
-  tasks[i].done=true;
-  alert("Completed ✅");
-}
+  function formatTime(hour, minute, ampm) {
+    return `${hour}:${minute} ${ampm}`;
+  }
 
-/* PARTICLES */
-const canvas=document.getElementById("particles");
-const ctx=canvas.getContext("2d");
-canvas.width=innerWidth;
-canvas.height=innerHeight;
+  function getTaskTimeMinutes(task) {
+    let hour24 = parseInt(task.hour) % 12;
+    if (task.ampm === "PM") hour24 += 12;
+    if (task.hour === "12" && task.ampm === "AM") hour24 = 0;
+    if (task.hour === "12" && task.ampm === "PM") hour24 = 12;
+    return hour24 * 60 + parseInt(task.minute);
+  }
 
-let p=[];
-for(let i=0;i<80;i++){
-  p.push({
-    x:Math.random()*canvas.width,
-    y:Math.random()*canvas.height,
-    r:Math.random()*2,
-    dx:(Math.random()-0.5)*0.5,
-    dy:(Math.random()-0.5)*0.5
+  function joinMeeting(meetingUrl) {
+    if (meetingUrl && meetingUrl.trim()) {
+      window.open(meetingUrl.trim(), '_blank');
+      return true;
+    }
+    return false;
+  }
+
+  function checkAndJoinMeetings() {
+    const now = new Date();
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+    const currentDate = now.toDateString();
+    
+    tasks.forEach(task => {
+      if (!task.completed && task.type === 'meeting' && task.meetingLink && !task.joinedToday) {
+        const taskTime = getTaskTimeMinutes(task);
+        if (Math.abs(currentTime - taskTime) <= 2 && task.lastCheckedDate !== currentDate) {
+          task.lastCheckedDate = currentDate;
+          task.joinedToday = true;
+          
+          if (Notification.permission === "granted") {
+            new Notification(`Meeting Starting: ${task.name}`, {
+              body: `Click to join ${task.meetingLink}`,
+              icon: "https://cdn-icons-png.flaticon.com/512/190/190411.png"
+            });
+          }
+          
+          const shouldJoin = confirm(`🔔 "${task.name}" is starting now!\nJoin meeting?`);
+          if (shouldJoin) {
+            joinMeeting(task.meetingLink);
+          }
+          
+          if (modal.classList.contains('active')) renderTasksByTab();
+        }
+      }
+    });
+  }
+
+  function addNewTask() {
+    const taskTitle = document.getElementById('taskName').value.trim();
+    if (!taskTitle) {
+      document.getElementById('taskName').style.borderColor = "#ff8888";
+      setTimeout(() => document.getElementById('taskName').style.borderColor = "", 800);
+      return;
+    }
+    
+    const hour = document.getElementById('hourSelect').value;
+    const minute = document.getElementById('minuteSelect').value;
+    const ampm = document.getElementById('ampmSelect').value;
+    const type = document.getElementById('taskType').value;
+    const meetingLink = document.getElementById('meetingLink').value.trim();
+    
+    const isImportant = (type === "important");
+    const isMeeting = (type === "meeting");
+    
+    const newTask = {
+      id: nextId++,
+      name: taskTitle,
+      hour: hour,
+      minute: minute,
+      ampm: ampm,
+      important: isImportant,
+      type: isMeeting ? 'meeting' : 'task',
+      meetingLink: isMeeting ? meetingLink : null,
+      completed: false,
+      joinedToday: false,
+      lastCheckedDate: null
+    };
+    
+    tasks.push(newTask);
+    document.getElementById('taskName').value = '';
+    document.getElementById('meetingLink').value = '';
+    document.getElementById('taskType').value = 'normal';
+    
+    if (modal.classList.contains('active')) renderTasksByTab();
+  }
+
+  function deleteTaskById(id) {
+    tasks = tasks.filter(t => t.id !== id);
+    if (modal.classList.contains('active')) renderTasksByTab();
+  }
+
+  function markCompleted(id) {
+    const task = tasks.find(t => t.id === id);
+    if (task && !task.completed) {
+      task.completed = true;
+      if (modal.classList.contains('active')) renderTasksByTab();
+    }
+  }
+
+  function getFilteredList() {
+    if (currentTab === "all") return tasks;
+    if (currentTab === "completed") return tasks.filter(t => t.completed === true);
+    if (currentTab === "upcoming") return tasks.filter(t => !t.completed);
+    if (currentTab === "important") return tasks.filter(t => t.important === true && !t.completed);
+    if (currentTab === "meetings") return tasks.filter(t => t.type === 'meeting' && !t.completed);
+    return [];
+  }
+
+  function renderTasksByTab() {
+    const filtered = getFilteredList();
+    const container = document.getElementById('tasksContainer');
+    if (filtered.length === 0) {
+      container.innerHTML = `<div class="empty-placeholder"><i class="fas fa-calendar-day"></i> No items here</div>`;
+      return;
+    }
+    
+    let sorted = [...filtered];
+    if (currentTab === "upcoming" || currentTab === "meetings") {
+      sorted.sort((a,b) => getTaskTimeMinutes(a) - getTaskTimeMinutes(b));
+    }
+    
+    container.innerHTML = sorted.map(task => `
+      <div class="task-card">
+        <div class="task-left">
+          <div class="task-title">
+            ${task.name}
+            ${task.important ? '<span class="imp-badge"><i class="fas fa-star"></i> Important</span>' : ''}
+            ${task.type === 'meeting' ? '<span class="meeting-badge"><i class="fas fa-video"></i> Meeting</span>' : ''}
+            ${task.completed ? '<span class="done-badge"><i class="fas fa-check-circle"></i> Done</span>' : ''}
+          </div>
+          <div class="task-time-text">
+            <i class="far fa-clock"></i> ${formatTime(task.hour, task.minute, task.ampm)}
+          </div>
+          ${task.type === 'meeting' && task.meetingLink ? `
+            <div class="meeting-link" onclick="window.open('${task.meetingLink}', '_blank')">
+              <i class="fas fa-link"></i> ${task.meetingLink.substring(0, 40)}...
+            </div>
+          ` : ''}
+        </div>
+        <div class="task-actions-group">
+          ${!task.completed && task.type === 'meeting' && task.meetingLink ? `
+            <button class="action-icon" onclick="window.open('${task.meetingLink}', '_blank')" style="background:#10b981;color:white;border-radius:30px;width:34px;height:34px;">
+              <i class="fas fa-video"></i>
+            </button>
+          ` : ''}
+          ${!task.completed ? `<button class="action-icon done-act" data-id="${task.id}"><i class="fas fa-check"></i></button>` : ''}
+          <button class="action-icon delete-act" data-id="${task.id}"><i class="fas fa-trash-alt"></i></button>
+        </div>
+      </div>
+    `).join('');
+    
+    document.querySelectorAll('.done-act').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = parseInt(btn.getAttribute('data-id'));
+        markCompleted(id);
+      });
+    });
+    document.querySelectorAll('.delete-act').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = parseInt(btn.getAttribute('data-id'));
+        deleteTaskById(id);
+      });
+    });
+  }
+
+  function openModalUI() {
+    renderTasksByTab();
+    document.getElementById('taskModal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+  
+  function closeModalUI() {
+    document.getElementById('taskModal').classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  function switchTab(tabId) {
+    currentTab = tabId;
+    document.querySelectorAll('.tab-pill').forEach(btn => {
+      if (btn.getAttribute('data-tab') === tabId) btn.classList.add('active');
+      else btn.classList.remove('active');
+    });
+    renderTasksByTab();
+  }
+
+  document.getElementById('addTaskBtn').addEventListener('click', addNewTask);
+  document.getElementById('viewTasksBtn').addEventListener('click', openModalUI);
+  document.getElementById('closeModalBtn').addEventListener('click', closeModalUI);
+  document.getElementById('taskModal').addEventListener('click', (e) => { if (e.target === document.getElementById('taskModal')) closeModalUI(); });
+  document.querySelectorAll('.tab-pill').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.getAttribute('data-tab')));
   });
-}
 
-function anim(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  p.forEach(pt=>{
-    ctx.beginPath();
-    ctx.arc(pt.x,pt.y,pt.r,0,Math.PI*2);
-    ctx.fillStyle="white";
-    ctx.fill();
-    pt.x+=pt.dx;
-    pt.y+=pt.dy;
-    if(pt.x<0||pt.x>canvas.width)pt.dx*=-1;
-    if(pt.y<0||pt.y>canvas.height)pt.dy*=-1;
-  });
-  requestAnimationFrame(anim);
-}
-anim();
+  if ("Notification" in window) {
+    Notification.requestPermission();
+  }
 
+  setInterval(checkAndJoinMeetings, 30000);
+  checkAndJoinMeetings();
+
+  function initParticles() {
+    const container = document.getElementById('particleField');
+    for (let i = 0; i < 60; i++) {
+      const p = document.createElement('div');
+      p.classList.add('particle');
+      const size = Math.random() * 7 + 2;
+      p.style.width = `${size}px`;
+      p.style.height = `${size}px`;
+      p.style.left = `${Math.random() * 100}%`;
+      p.style.animationDuration = `${Math.random() * 18 + 9}s`;
+      p.style.animationDelay = `${Math.random() * 20}s`;
+      p.style.opacity = Math.random() * 0.5 + 0.15;
+      container.appendChild(p);
+    }
+  }
+  initParticles();
 </script>
-
 </body>
 </html>
