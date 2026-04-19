@@ -1,5 +1,6 @@
 // ===================================================================
-//  SMART DAILY ROUTINE ASSISTANT - COMPLETE APP.JS (WITH SOUND)
+//  SMART DAILY ROUTINE ASSISTANT - COMPLETE APP.JS
+//  (With Sound + Install Popup + Permanent Button)
 // ===================================================================
 
 // ==================== APPLICATION STATE ====================
@@ -19,10 +20,9 @@ function isPWA() {
          window.navigator.standalone === true;
 }
 
-// ==================== PLAY SOUND FUNCTION (NEW) ====================
+// ==================== PLAY SOUND FUNCTION ====================
 function playNotificationSound() {
   try {
-    // Web Audio API Beep (works on most modern browsers)
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
@@ -30,8 +30,8 @@ function playNotificationSound() {
     oscillator.connect(gainNode);
     gainNode.connect(audioContext.destination);
     
-    oscillator.frequency.value = 880; // 880 Hz = A5 note
-    gainNode.gain.value = 0.3; // Volume level
+    oscillator.frequency.value = 880;
+    gainNode.gain.value = 0.3;
     
     oscillator.start();
     setTimeout(() => {
@@ -40,7 +40,6 @@ function playNotificationSound() {
     }, 600);
   } catch(e) {
     console.log('Web Audio not supported:', e);
-    // Fallback: Try HTML5 Audio
     try {
       const audio = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
       audio.volume = 0.5;
@@ -120,7 +119,6 @@ function showIOSMessage() {
 
 // ==================== BROWSER NOTIFICATION (WITH SOUND) ====================
 function showBrowserNotification(taskName, time) {
-  // Play sound when notification appears
   playNotificationSound();
   
   if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
@@ -153,6 +151,213 @@ function requestNotificationPermission() {
       Notification.requestPermission();
     }
   }
+}
+
+// ==================== INSTALL POPUP FUNCTIONS ====================
+
+// Check if app is already installed
+function isAppInstalled() {
+  return window.matchMedia('(display-mode: standalone)').matches || 
+         window.navigator.standalone === true;
+}
+
+// Get device type for specific instructions
+function getDeviceType() {
+  if (isIOS()) return 'ios';
+  if (isAndroid()) return 'android';
+  return 'other';
+}
+
+// Get install instructions based on device
+function getInstallInstructions() {
+  const device = getDeviceType();
+  
+  if (device === 'ios') {
+    return {
+      title: '📱 Install on iPhone/iPad',
+      steps: [
+        'Tap the Share button (📤) at the bottom',
+        'Scroll down and tap "Add to Home Screen"',
+        'Tap "Add" in the top right corner'
+      ],
+      buttonText: '📤 Show Me How',
+      icon: '🍎'
+    };
+  } else if (device === 'android') {
+    return {
+      title: '🤖 Install on Android',
+      steps: [
+        'Click "Install" button below',
+        'Tap "Install" on the popup',
+        'App will be added to your home screen'
+      ],
+      buttonText: '📲 Install Now',
+      icon: '📱'
+    };
+  } else {
+    return {
+      title: '💻 Install on Desktop',
+      steps: [
+        'Click "Install" button below',
+        'Click "Install" on the popup',
+        'Open from desktop like a regular app'
+      ],
+      buttonText: '💻 Install Now',
+      icon: '🖥️'
+    };
+  }
+}
+
+// Create permanent install button
+function createPermanentInstallButton() {
+  if (document.getElementById('permanentInstallBtn')) return;
+  if (isAppInstalled()) return;
+  
+  const installBtn = document.createElement('button');
+  installBtn.id = 'permanentInstallBtn';
+  installBtn.innerHTML = '📲 Install App (Get Full Features)';
+  
+  installBtn.onclick = () => {
+    showInstallPopup();
+  };
+  
+  const container = document.querySelector('.container');
+  const addTaskCard = document.querySelector('.add-task-card');
+  if (container && addTaskCard && !document.getElementById('permanentInstallBtn')) {
+    container.insertBefore(installBtn, addTaskCard);
+  }
+}
+
+function removePermanentInstallButton() {
+  const btn = document.getElementById('permanentInstallBtn');
+  if (btn) btn.remove();
+}
+
+// Show install popup
+function showInstallPopup() {
+  if (isAppInstalled()) {
+    removePermanentInstallButton();
+    return;
+  }
+  
+  const instructions = getInstallInstructions();
+  const device = getDeviceType();
+  
+  const existingPopup = document.querySelector('.install-popup');
+  if (existingPopup) existingPopup.remove();
+  
+  const popup = document.createElement('div');
+  popup.className = `install-popup ${device}-install`;
+  popup.innerHTML = `
+    <h4>
+      <span>${instructions.icon}</span> 
+      ${instructions.title}
+    </h4>
+    <p>✨ <strong>Install this app</strong> to get all features:<br>
+    • 🔔 Notifications even when app is closed<br>
+    • 📴 Works offline • ⚡ Faster performance<br>
+    • 📱 Like a real mobile app!</p>
+    
+    <div class="install-steps">
+      <strong>📌 How to install:</strong>
+      <ol>
+        ${instructions.steps.map(step => `<li>${step}</li>`).join('')}
+      </ol>
+    </div>
+    
+    <div class="install-buttons">
+      <button class="install-btn" id="installNowBtn">${instructions.buttonText}</button>
+      <button class="later-btn" id="installLaterBtn">⏰ Remind Me Later</button>
+    </div>
+  `;
+  
+  document.body.appendChild(popup);
+  
+  document.getElementById('installNowBtn').addEventListener('click', () => {
+    popup.remove();
+    
+    if (device === 'android' && deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          showToast('✅ App installed successfully!');
+          removePermanentInstallButton();
+        } else {
+          createPermanentInstallButton();
+        }
+        deferredPrompt = null;
+      });
+    } 
+    else if (device === 'ios') {
+      showToast('📲 Tap Share → Add to Home Screen to install', 5000);
+      showIOSInstallGuide();
+      createPermanentInstallButton();
+    }
+    else {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            showToast('✅ App installed successfully!');
+            removePermanentInstallButton();
+          } else {
+            createPermanentInstallButton();
+          }
+          deferredPrompt = null;
+        });
+      } else {
+        createPermanentInstallButton();
+      }
+    }
+  });
+  
+  document.getElementById('installLaterBtn').addEventListener('click', () => {
+    popup.remove();
+    createPermanentInstallButton();
+    showToast('💡 You can install anytime using the orange button below', 4000);
+  });
+}
+
+// iOS Visual Guide
+function showIOSInstallGuide() {
+  const guide = document.createElement('div');
+  guide.className = 'install-popup ios-install';
+  guide.style.position = 'fixed';
+  guide.style.top = '50%';
+  guide.style.left = '50%';
+  guide.style.transform = 'translate(-50%, -50%)';
+  guide.style.maxWidth = '320px';
+  guide.style.zIndex = '10001';
+  guide.innerHTML = `
+    <h4>🍎 How to Install on iPhone</h4>
+    <div style="text-align: center; margin: 20px 0;">
+      <div style="font-size: 48px;">📤</div>
+      <div style="margin: 10px 0;">Step 1: Tap Share</div>
+      <div style="font-size: 48px;">⬇️</div>
+      <div style="margin: 10px 0;">Step 2: Tap "Add to Home Screen"</div>
+      <div style="font-size: 48px;">✅</div>
+      <div style="margin: 10px 0;">Step 3: Tap "Add"</div>
+    </div>
+    <button class="install-btn" id="closeGuideBtn" style="width: 100%;">Got it!</button>
+  `;
+  
+  document.body.appendChild(guide);
+  
+  document.getElementById('closeGuideBtn').addEventListener('click', () => {
+    guide.remove();
+  });
+}
+
+// Show popup after page loads
+function showInstallPopupWithDelay() {
+  if (isAppInstalled()) {
+    removePermanentInstallButton();
+    return;
+  }
+  
+  setTimeout(() => {
+    showInstallPopup();
+  }, 2000);
 }
 
 // ==================== RENDER FUNCTION ====================
@@ -195,6 +400,11 @@ function render() {
   
   renderTaskList();
   updateCurrentTime();
+  
+  // Create permanent install button after render
+  if (!isAppInstalled()) {
+    createPermanentInstallButton();
+  }
 }
 
 // ==================== RENDER TASK LIST ====================
@@ -385,41 +595,11 @@ function registerServiceWorker() {
   }
 }
 
-// ==================== INSTALL PROMPT ====================
+// ==================== INSTALL PROMPT (BROWSER NATIVE) ====================
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
-  
-  const installBtn = document.createElement('button');
-  installBtn.innerHTML = '📲 Install App';
-  installBtn.style.cssText = `
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
-    background: #4F46E5;
-    color: white;
-    border: none;
-    padding: 12px 20px;
-    border-radius: 30px;
-    font-weight: bold;
-    cursor: pointer;
-    z-index: 9999;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-  `;
-  
-  installBtn.onclick = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') {
-        installBtn.remove();
-      }
-      deferredPrompt = null;
-    }
-  };
-  
-  document.body.appendChild(installBtn);
 });
 
 // ==================== INITIALIZATION ====================
@@ -430,6 +610,10 @@ function init() {
   startTimers();
   registerServiceWorker();
   showIOSMessage();
+  
+  if (!isAppInstalled()) {
+    showInstallPopupWithDelay();
+  }
 }
 
 // ==================== START APPLICATION ====================
