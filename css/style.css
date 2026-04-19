@@ -334,6 +334,42 @@ button:active {
     border-left: 4px solid #3DDC84;
 }
 
+/* ============================================ */
+/* PERMANENT INSTALL BUTTON STYLES (NEW) */
+/* ============================================ */
+
+#permanentInstallBtn {
+    width: 100%;
+    background: linear-gradient(135deg, #FF9800, #F57C00);
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-bottom: 15px;
+    font-size: 14px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: transform 0.2s;
+    animation: pulse 2s infinite;
+}
+
+#permanentInstallBtn:hover {
+    transform: translateY(-2px);
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(255, 152, 0, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 152, 0, 0);
+    }
+}
+
 /* Responsive for small screens */
 @media (max-width: 480px) {
     body {
@@ -375,6 +411,11 @@ button:active {
     }
     
     .install-popup p {
+        font-size: 12px;
+    }
+    
+    #permanentInstallBtn {
+        padding: 12px;
         font-size: 12px;
     }
 }
