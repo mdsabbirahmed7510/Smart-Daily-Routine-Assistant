@@ -1,11 +1,11 @@
 // ===================================================================
-//  SMART DAILY ROUTINE ASSISTANT - COMPLETE APP.JS
+//  SMART DAILY ROUTINE ASSISTANT - COMPLETE APP.JS (WITH SOUND)
 // ===================================================================
 
 // ==================== APPLICATION STATE ====================
 let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
 
-// ==================== DEVICE DETECTION (NEW) ====================
+// ==================== DEVICE DETECTION ====================
 function isIOS() {
   return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 }
@@ -19,7 +19,39 @@ function isPWA() {
          window.navigator.standalone === true;
 }
 
-// ==================== PLATFORM NOTIFICATION SETUP (NEW) ====================
+// ==================== PLAY SOUND FUNCTION (NEW) ====================
+function playNotificationSound() {
+  try {
+    // Web Audio API Beep (works on most modern browsers)
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.value = 880; // 880 Hz = A5 note
+    gainNode.gain.value = 0.3; // Volume level
+    
+    oscillator.start();
+    setTimeout(() => {
+      oscillator.stop();
+      audioContext.close();
+    }, 600);
+  } catch(e) {
+    console.log('Web Audio not supported:', e);
+    // Fallback: Try HTML5 Audio
+    try {
+      const audio = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
+      audio.volume = 0.5;
+      audio.play().catch(err => console.log('Audio play failed:', err));
+    } catch(err) {
+      console.log('Sound not available');
+    }
+  }
+}
+
+// ==================== PLATFORM NOTIFICATION SETUP ====================
 function setupPlatformNotifications() {
   if (isIOS()) {
     console.log('🍎 iOS device detected - notifications may be limited');
@@ -49,7 +81,7 @@ function setupPlatformNotifications() {
   }
 }
 
-// ==================== TOAST FUNCTION (NEW) ====================
+// ==================== TOAST FUNCTION ====================
 function showToast(message, duration = 3000) {
   let statusDiv = document.getElementById('notificationStatus');
   if (!statusDiv) {
@@ -69,7 +101,7 @@ function showToast(message, duration = 3000) {
   }, duration);
 }
 
-// ==================== iOS MESSAGE FUNCTION (NEW) ====================
+// ==================== iOS MESSAGE FUNCTION ====================
 function showIOSMessage() {
   if (isIOS() && !isPWA()) {
     setTimeout(() => {
@@ -86,17 +118,21 @@ function showIOSMessage() {
   }
 }
 
-// ==================== BROWSER NOTIFICATION (UPDATED) ====================
+// ==================== BROWSER NOTIFICATION (WITH SOUND) ====================
 function showBrowserNotification(taskName, time) {
+  // Play sound when notification appears
+  playNotificationSound();
+  
   if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
     navigator.serviceWorker.ready.then(function(registration) {
       registration.showNotification('⏰ Smart Reminder', {
         body: `Time to start: ${taskName} (${time})`,
         icon: 'https://cdn-icons-png.flaticon.com/512/1995/1995572.png',
         badge: 'https://cdn-icons-png.flaticon.com/512/1995/1995572.png',
-        vibrate: [200, 100, 200],
+        vibrate: [200, 100, 200, 100, 300],
         tag: 'reminder',
-        requireInteraction: true
+        requireInteraction: true,
+        silent: false
       });
     });
   } 
@@ -104,12 +140,13 @@ function showBrowserNotification(taskName, time) {
     new Notification('⏰ Smart Reminder', {
       body: `Time to start: ${taskName} (${time})`,
       icon: 'https://cdn-icons-png.flaticon.com/512/1995/1995572.png',
-      vibrate: [200, 100, 200]
+      vibrate: [200, 100, 200],
+      silent: false
     });
   }
 }
 
-// ==================== LEGACY NOTIFICATION (for compatibility) ====================
+// ==================== LEGACY NOTIFICATION ====================
 function requestNotificationPermission() {
   if ('Notification' in window) {
     if (Notification.permission === 'default') {
